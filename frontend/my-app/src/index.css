@@ -1,0 +1,29 @@
+:root {
+  --bg-primary: #fffaf5;
+  --bg-secondary: #fff5f0;
+  --text-primary: #2d2a26;
+  --text-secondary: #5a524d;
+  --accent-gold: #d4a52e;
+  --accent-gold-light: #e6c26a;
+  --border-color: #f0e6dd;
+  --card-bg: #ffffff;
+  --shadow: rgba(212, 165, 46, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+}
