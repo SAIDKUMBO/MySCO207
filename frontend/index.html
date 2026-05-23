@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>School Student Portal</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">School management portal</p>
+          <h1>Student Portal</h1>
+          <p class="hero-copy">
+            Manage students, track grades, and keep academic records in one place.
+          </p>
+        </div>
+        <div class="hero-status">
+          <span class="status-dot" id="connectionDot"></span>
+          <span id="connectionStatus">Checking database connection...</span>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="stats-grid" aria-label="Dashboard statistics">
+          <article class="stat-card">
+            <span class="stat-label">Students</span>
+            <strong id="totalStudents">0</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Grades</span>
+            <strong id="totalGrades">0</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Average score</span>
+            <strong id="averageScore">0</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Passing students</span>
+            <strong id="passingStudents">0</strong>
+          </article>
+        </section>
+
+        <section class="workspace">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="section-label" id="studentFormLabel">Add student</p>
+                <h2>Student record</h2>
+              </div>
+              <button class="ghost-btn" id="resetStudentForm" type="button">Reset</button>
+            </div>
+
+            <form id="studentForm" class="stack-form">
+              <input type="hidden" id="studentId" />
+              <label>
+                Student number
+                <input id="studentNumber" name="studentNumber" type="text" placeholder="STU-1001" required />
+              </label>
+              <label>
+                First name
+                <input id="firstName" name="firstName" type="text" placeholder="Ama" required />
+              </label>
+              <label>
+                Last name
+                <input id="lastName" name="lastName" type="text" placeholder="Mensah" required />
+              </label>
+              <label>
+                Class
+                <input id="className" name="className" type="text" placeholder="Grade 10A" required />
+              </label>
+              <label>
+                Email
+                <input id="email" name="email" type="email" placeholder="student@example.com" />
+              </label>
+              <button class="primary-btn" type="submit" id="studentSubmitBtn">Save student</button>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="section-label">Selected student</p>
+                <h2>Grades</h2>
+              </div>
+              <span class="pill" id="selectedStudentPill">No student selected</span>
+            </div>
+
+            <div class="student-detail" id="studentDetail">
+              <p class="muted">Select a student from the list to view their grades and add new ones.</p>
+            </div>
+
+            <form id="gradeForm" class="stack-form compact-form">
+              <label>
+                Subject
+                <input id="subject" name="subject" type="text" placeholder="Mathematics" required />
+              </label>
+              <div class="two-up">
+                <label>
+                  Score
+                  <input id="score" name="score" type="number" min="0" max="100" step="0.01" placeholder="88" required />
+                </label>
+                <label>
+                  Term
+                  <input id="term" name="term" type="text" placeholder="Term 1" required />
+                </label>
+              </div>
+              <button class="primary-btn" type="submit">Add grade</button>
+            </form>
+
+            <div class="table-wrap grades-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>Term</th>
+                    <th>Score</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="gradesTableBody">
+                  <tr>
+                    <td colspan="4" class="empty-cell">No grades loaded yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="panel list-panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-label">Records</p>
+              <h2>Students</h2>
+            </div>
+            <span class="pill" id="studentCountPill">0 records</span>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Class</th>
+                  <th>Avg</th>
+                  <th>Grades</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTableBody">
+                <tr>
+                  <td colspan="5" class="empty-cell">Loading students...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <div class="toast" id="toast" aria-live="polite"></div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
