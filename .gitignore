@@ -1,9 +1,15 @@
 
+# Environment files
+.env
+.env.*
+!.env.example
 backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Dependencies
 backend/node_modules/
-backend/.env.bak.*
-backend_server.log
-backend_server.pid
-backend/.env.bak.*
+
+# Local runtime artifacts
 backend_server.log
 backend_server.pid

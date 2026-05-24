@@ -221,6 +221,108 @@
   // helper: authenticated actions
   // if user data exists in URL query (for convenience) restore; otherwise expect login
 
+  // Grades UI and API helpers
+  async function api(path, opts = {}){
+    const headers = opts.headers || {}
+    if(state.token) headers['Authorization'] = 'Bearer ' + state.token
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json'
+    const res = await fetch(path, Object.assign({ headers }, opts))
+    if(!res.ok){
+      const j = await res.json().catch(()=>({ message: res.statusText }))
+      throw new Error(j.message || res.statusText)
+    }
+    return res.json().catch(()=>null)
+  }
+
+  function createToolbarButtons(){
+    const toolbar = document.querySelector('.toolbar > div')
+    if(!toolbar) return
+    const enterGradeBtn = document.createElement('button')
+    enterGradeBtn.textContent = 'Enter Grade'
+    enterGradeBtn.className = 'ghost-btn'
+    enterGradeBtn.id = 'enterGradeBtn'
+    enterGradeBtn.hidden = true
+    toolbar.insertBefore(enterGradeBtn, toolbar.firstChild)
+
+    const myGradesBtn = document.createElement('button')
+    myGradesBtn.textContent = 'My Grades'
+    myGradesBtn.className = 'ghost-btn'
+    myGradesBtn.id = 'myGradesBtn'
+    myGradesBtn.hidden = true
+    toolbar.insertBefore(myGradesBtn, toolbar.firstChild)
+
+    enterGradeBtn.addEventListener('click', openEnterGradeModal)
+    myGradesBtn.addEventListener('click', openMyGradesModal)
+  }
+
+  function updateRoleButtons(){
+    const enter = document.getElementById('enterGradeBtn')
+    const my = document.getElementById('myGradesBtn')
+    if(!state.user){ if(enter) enter.hidden = true; if(my) my.hidden = true; return }
+    if(state.user.role === 'teacher'){
+      if(enter) enter.hidden = false
+      if(my) my.hidden = true
+    }else if(state.user.role === 'student'){
+      if(enter) enter.hidden = true
+      if(my) my.hidden = false
+    }else{
+      if(enter) enter.hidden = true
+      if(my) my.hidden = true
+    }
+  }
+
+  function openModal(html){
+    modalBody.innerHTML = html
+    modal.hidden = false
+  }
+
+  function closeModal(){ modal.hidden = true; modalBody.innerHTML = '' }
+  modalClose.addEventListener('click', closeModal)
+
+  function openEnterGradeModal(){
+    const students = state.students || []
+    const options = students.map(s=>`<option value="${s.id}">${s.firstName} ${s.lastName} (${s.studentNumber})</option>`).join('')
+    openModal(`
+      <h3>Enter grade</h3>
+      <form id="gradeForm">
+        <label>Student<select name="studentId">${options}</select></label>
+        <label>Subject<input name="subject" required /></label>
+        <label>Score<input name="score" type="number" step="0.1" required /></label>
+        <label>Term<input name="term" value="Term 1" required /></label>
+        <div style="margin-top:10px"><button type="submit" class="primary-btn">Save</button></div>
+      </form>
+    `)
+    document.getElementById('gradeForm').addEventListener('submit', async (e)=>{
+      e.preventDefault()
+      const f = e.target
+      const payload = { studentId: f.studentId.value, subject: f.subject.value.trim(), score: Number(f.score.value), term: f.term.value.trim() }
+      try{
+        await api('/api/grades', { method: 'POST', body: JSON.stringify(payload) })
+        alert('Grade saved')
+        closeModal()
+      }catch(err){ alert('Failed to save grade: ' + err.message) }
+    })
+  }
+
+  async function openMyGradesModal(){
+    try{
+      const grades = await api(state.user.role === 'student' ? '/api/my/grades' : '/api/grades')
+      renderGradesModal(grades)
+    }catch(err){ alert('Failed to load grades: ' + err.message) }
+  }
+
+  function renderGradesModal(grades){
+    const rows = grades.map(g=>`<tr><td>${g.subject}</td><td>${g.score}</td><td>${g.grade||''}</td><td>${g.term}</td></tr>`).join('')
+    openModal(`<h3>Grades</h3><table class="grades"><thead><tr><th>Subject</th><th>Score</th><th>Grade</th><th>Term</th></tr></thead><tbody>${rows}</tbody></table>`)
+  }
+
+  // wire toolbar buttons into existing lifecycle
+  createToolbarButtons()
+  const origSave = save
+  save = function(){ origSave(); updateRoleButtons() }
+  // call once in case already signed in
+  updateRoleButtons()
+
   // expose for debugging
   window.__sco207 = {state,save}
 

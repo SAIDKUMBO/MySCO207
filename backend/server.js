@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import pool from './db.js'
-import { createAuthToken, requireAuth } from './auth.js'
+import { createAuthToken, requireAuth, requireRole } from './auth.js'
 
 dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '.env'), override: true })
 
@@ -60,6 +60,69 @@ app.get('/api/students', requireAuth, async (req,res)=>{
     res.status(500).json({ message: 'Failed to load students', error: err.message })
   }
 })
+
+  // Grades endpoints
+  app.get('/api/grades', requireAuth, async (req, res) => {
+    if (useDemoMode) {
+      const demo = [
+        { id: 1, studentId: 1, subject: 'Programming Fundamentals', score: 84.5, term: 'Term 1' },
+      ]
+      if (req.user.role === 'student') return res.json(demo.filter(d=>d.studentId === req.user.studentId))
+      if (req.user.role === 'teacher') return res.json(demo)
+      return res.json([])
+    }
+
+    try{
+      if(req.user.role === 'student'){
+        const [rows] = await pool.query('SELECT id, student_id, subject, score, term, created_at FROM grades WHERE student_id = ? ORDER BY created_at DESC', [req.user.studentId])
+        const out = rows.map(r=>({ id: r.id, studentId: r.student_id, subject: r.subject, score: Number(r.score), term: r.term, createdAt: r.created_at, grade: (r.score>=90? 'A': r.score>=80? 'B': r.score>=70? 'C': r.score>=60? 'D':'F') }))
+        return res.json(out)
+      }
+
+      if(req.user.role === 'teacher'){
+        const studentId = req.query.studentId
+        if(studentId){
+          const [rows] = await pool.query('SELECT id, student_id, subject, score, term, created_at FROM grades WHERE student_id = ? ORDER BY created_at DESC', [studentId])
+          const out = rows.map(r=>({ id: r.id, studentId: r.student_id, subject: r.subject, score: Number(r.score), term: r.term, createdAt: r.created_at, grade: (r.score>=90? 'A': r.score>=80? 'B': r.score>=70? 'C': r.score>=60? 'D':'F') }))
+          return res.json(out)
+        }
+        const [rows] = await pool.query('SELECT g.id, g.student_id, s.first_name, s.last_name, g.subject, g.score, g.term, g.created_at FROM grades g JOIN students s ON s.id = g.student_id ORDER BY g.created_at DESC')
+        const out = rows.map(r=>({ id: r.id, studentId: r.student_id, studentName: (r.first_name + ' ' + r.last_name), subject: r.subject, score: Number(r.score), term: r.term, createdAt: r.created_at, grade: (r.score>=90? 'A': r.score>=80? 'B': r.score>=70? 'C': r.score>=60? 'D':'F') }))
+        return res.json(out)
+      }
+
+      return res.status(403).json({ message: 'Forbidden' })
+    }catch(err){
+      res.status(500).json({ message: 'Failed to load grades', error: err.message })
+    }
+  })
+
+  app.get('/api/my/grades', requireAuth, async (req,res)=>{
+    if(useDemoMode) return res.json([])
+    if(!req.user || !req.user.studentId) return res.status(403).json({ message: 'Forbidden' })
+    try{
+      const [rows] = await pool.query('SELECT id, student_id, subject, score, term, created_at FROM grades WHERE student_id = ? ORDER BY created_at DESC', [req.user.studentId])
+      const out = rows.map(r=>({ id: r.id, studentId: r.student_id, subject: r.subject, score: Number(r.score), term: r.term, createdAt: r.created_at, grade: (r.score>=90? 'A': r.score>=80? 'B': r.score>=70? 'C': r.score>=60? 'D':'F') }))
+      res.json(out)
+    }catch(err){
+      res.status(500).json({ message: 'Failed to load grades', error: err.message })
+    }
+  })
+
+  app.post('/api/grades', requireAuth, requireRole('teacher'), async (req,res)=>{
+    const { studentId, subject, score, term } = req.body
+    if(!studentId || !subject || typeof score === 'undefined' || !term) return res.status(400).json({ message: 'studentId, subject, score and term are required' })
+    try{
+      const [result] = await pool.query('INSERT INTO grades (student_id, subject, score, term) VALUES (?,?,?,?)', [studentId, subject, Number(score), term])
+      const [rows] = await pool.query('SELECT id, student_id, subject, score, term, created_at FROM grades WHERE id = ? LIMIT 1', [result.insertId])
+      if(rows.length === 0) return res.status(500).json({ message: 'Failed to fetch created grade' })
+      const r = rows[0]
+      const out = { id: r.id, studentId: r.student_id, subject: r.subject, score: Number(r.score), term: r.term, createdAt: r.created_at, grade: (r.score>=90? 'A': r.score>=80? 'B': r.score>=70? 'C': r.score>=60? 'D':'F') }
+      res.status(201).json(out)
+    }catch(err){
+      res.status(500).json({ message: 'Failed to save grade', error: err.message })
+    }
+  })
 
 app.listen(port, ()=>{
   console.log(`Student portal server running on http://localhost:${port}`)
