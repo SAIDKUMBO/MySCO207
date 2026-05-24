@@ -11,6 +11,8 @@ npm run init-db
 npm start
 ```
 
+The backend reads `.env` with `dotenv`, so keep the real credentials only in `backend/.env`. `backend/.env.example` is the clean template to commit.
+
 `npm run init-db` loads `schema.sql` into the MySQL server pointed to by `.env`. If you already created the database manually, you can also import the file with `mysql -u root -p < schema.sql`.
 
 To view the portal without MySQL, run `npm run demo` instead of `npm start`.
@@ -31,7 +33,7 @@ The app expects a MySQL database named `school_portal`. The schema file creates 
 
 The frontend files live in the repository root `frontend/` directory, which the server serves as static content.
 
-If you already have a MySQL server, update `.env` with the correct host, user, password, and port.
+If you already have a MySQL server, update `.env` with the correct host, user, password, port, and `AUTH_SECRET`.
 
 ### Connection checklist
 
