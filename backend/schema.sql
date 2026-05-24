@@ -48,27 +48,51 @@ SELECT 'STU-002', 'Daniel', 'Owusu', 'Grade 11B', 'daniel@example.com'
 WHERE NOT EXISTS (SELECT 1 FROM students WHERE student_number = 'STU-002');
 
 INSERT INTO grades (student_id, subject, score, term)
-SELECT s.id, 'Mathematics', 84.5, 'Term 1'
+SELECT s.id, 'Programming Fundamentals', 84.5, 'Term 1'
 FROM students s
 WHERE s.student_number = 'STU-001'
   AND NOT EXISTS (
-    SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'Mathematics' AND g.term = 'Term 1'
+    SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'Programming Fundamentals' AND g.term = 'Term 1'
   );
 
 INSERT INTO grades (student_id, subject, score, term)
-SELECT s.id, 'English', 76.0, 'Term 1'
+SELECT s.id, 'Data Structures', 76.0, 'Term 1'
 FROM students s
 WHERE s.student_number = 'STU-001'
   AND NOT EXISTS (
-    SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'English' AND g.term = 'Term 1'
+    SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'Data Structures' AND g.term = 'Term 1'
   );
 
 INSERT INTO grades (student_id, subject, score, term)
-SELECT s.id, 'Science', 69.0, 'Term 1'
+SELECT s.id, 'Computer Systems', 69.0, 'Term 1'
 FROM students s
 WHERE s.student_number = 'STU-002'
   AND NOT EXISTS (
-    SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'Science' AND g.term = 'Term 1'
+    SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'Computer Systems' AND g.term = 'Term 1'
+  );
+
+INSERT INTO grades (student_id, subject, score, term)
+SELECT s.id, 'Database Systems', 91.0, 'Term 1'
+FROM students s
+WHERE s.student_number = 'STU-001'
+  AND NOT EXISTS (
+    SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'Database Systems' AND g.term = 'Term 1'
+  );
+
+INSERT INTO grades (student_id, subject, score, term)
+SELECT s.id, 'Web Development', 88.0, 'Term 1'
+FROM students s
+WHERE s.student_number = 'STU-002'
+  AND NOT EXISTS (
+    SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'Web Development' AND g.term = 'Term 1'
+  );
+
+INSERT INTO grades (student_id, subject, score, term)
+SELECT s.id, 'Software Engineering', 82.0, 'Term 1'
+FROM students s
+WHERE s.student_number = 'STU-002'
+  AND NOT EXISTS (
+    SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'Software Engineering' AND g.term = 'Term 1'
   );
 
 INSERT INTO users (username, password, role, full_name, student_id)
