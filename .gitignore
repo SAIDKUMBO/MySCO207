@@ -1,2 +1,9 @@
 
 backend/.env
+backend/node_modules/
+backend/.env.bak.*
+backend_server.log
+backend_server.pid
+backend/.env.bak.*
+backend_server.log
+backend_server.pid
