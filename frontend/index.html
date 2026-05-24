@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Student Portal (Static)</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">School management portal</p>
+          <h1>Student Portal</h1>
+          <p class="hero-copy">Static demo: HTML, CSS and JS only.</p>
+        </div>
+        <div class="hero-status">
+          <span class="pill" id="rolePill">Guest</span>
+          <span class="pill" id="userPill">Not signed in</span>
+          <button id="logoutBtn" class="ghost-btn" hidden>Log out</button>
+        </div>
+      </header>
+
+      <section class="auth-panel" id="authPanel">
+        <div>
+          <p class="eyebrow">Secure login</p>
+          <h2>Teacher and student access</h2>
+          <p class="auth-copy">Teachers can manage students, students see their own data.</p>
+          <div class="auth-tips">
+            <span class="pill">Teacher: teacher / teacher123</span>
+            <span class="pill">Student: amina / student123</span>
+            <span class="pill">Student: daniel / student123</span>
+          </div>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <label>Username
+            <input id="loginUsername" name="username" type="text" placeholder="teacher" required />
+          </label>
+          <label>Password
+            <input id="loginPassword" name="password" type="password" placeholder="••••••••" required />
+          </label>
+          <button class="primary-btn" type="submit">Sign in</button>
+        </form>
+      </section>
+
+      <main class="dashboard" id="dashboardShell" hidden>
+        <div class="toolbar">
+          <h2>Students</h2>
+          <div>
+            <button id="addStudentBtn" class="primary-btn" hidden>Add student</button>
+            <button id="demoResetBtn" class="ghost-btn">Reset demo data</button>
+          </div>
+        </div>
+
+        <section class="students-list" id="studentsList"></section>
+      </main>
+
+      <template id="studentCardTpl">
+        <article class="student-card">
+          <div>
+            <strong class="student-name"></strong>
+            <div class="student-meta"></div>
+          </div>
+          <div class="card-actions">
+            <button class="view-btn">View</button>
+            <button class="edit-btn" hidden>Edit</button>
+            <button class="delete-btn" hidden>Delete</button>
+          </div>
+        </article>
+      </template>
+
+      <div id="modal" class="modal" hidden>
+        <div class="modal-content">
+          <button id="modalClose" class="modal-close">×</button>
+          <div id="modalBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

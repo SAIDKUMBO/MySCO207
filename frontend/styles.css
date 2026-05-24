@@ -1,0 +1,33 @@
+:root{
+  --bg:#f6f9ff;
+  --card:#ffffff;
+  --accent:#0f62fe;
+  --muted:#6b7280;
+  --radius:8px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:#0b1320}
+.page-shell{max-width:980px;margin:28px auto;padding:16px}
+.hero{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.eyebrow{color:var(--muted);margin:0}
+.hero h1{margin:0}
+.hero-status{display:flex;gap:8px;align-items:center}
+.pill{background:#eef4ff;padding:6px 10px;border-radius:999px;color:var(--accent);font-size:0.85rem}
+.auth-panel{background:var(--card);padding:18px;border-radius:var(--radius);display:flex;gap:20px}
+.auth-form{display:flex;flex-direction:column;gap:10px;min-width:220px}
+label{display:flex;flex-direction:column;font-size:0.9rem}
+input{padding:8px;border:1px solid #e6eef8;border-radius:6px}
+.primary-btn{background:var(--accent);color:white;padding:10px 12px;border:none;border-radius:6px;cursor:pointer}
+.ghost-btn{background:transparent;border:1px solid #cbd5e1;padding:8px 10px;border-radius:6px;cursor:pointer}
+.dashboard{margin-top:18px}
+.toolbar{display:flex;justify-content:space-between;align-items:center}
+.students-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+.student-card{background:var(--card);padding:12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 2px rgba(12,22,38,0.04)}
+.card-actions button{margin-left:6px}
+.modal{position:fixed;inset:0;background:rgba(8,12,20,0.45);display:grid;place-items:center}
+.modal-content{background:var(--card);padding:16px;border-radius:10px;min-width:320px;max-width:720px}
+.modal-close{float:right;background:transparent;border:none;font-size:22px;cursor:pointer}
+.student-details{display:grid;grid-template-columns:1fr 200px;gap:12px}
+.grades-list{margin-top:8px}
+.grade-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed #eef4ff}
+.muted{color:var(--muted)}
