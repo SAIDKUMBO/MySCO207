@@ -25,6 +25,20 @@ CREATE TABLE IF NOT EXISTS grades (
     ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(80) NOT NULL UNIQUE,
+  password VARCHAR(120) NOT NULL,
+  role VARCHAR(20) NOT NULL,
+  full_name VARCHAR(150) NOT NULL,
+  student_id INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_users_student
+    FOREIGN KEY (student_id) REFERENCES students(id)
+    ON DELETE SET NULL
+);
+
 INSERT INTO students (student_number, first_name, last_name, class_name, email)
 SELECT 'STU-001', 'Amina', 'Mensah', 'Grade 10A', 'amina@example.com'
 WHERE NOT EXISTS (SELECT 1 FROM students WHERE student_number = 'STU-001');
@@ -56,3 +70,19 @@ WHERE s.student_number = 'STU-002'
   AND NOT EXISTS (
     SELECT 1 FROM grades g WHERE g.student_id = s.id AND g.subject = 'Science' AND g.term = 'Term 1'
   );
+
+INSERT INTO users (username, password, role, full_name, student_id)
+SELECT 'teacher', 'teacher123', 'teacher', 'Teacher Admin', NULL
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'teacher');
+
+INSERT INTO users (username, password, role, full_name, student_id)
+SELECT 'amina', 'student123', 'student', CONCAT(s.first_name, ' ', s.last_name), s.id
+FROM students s
+WHERE s.student_number = 'STU-001'
+  AND NOT EXISTS (SELECT 1 FROM users WHERE username = 'amina');
+
+INSERT INTO users (username, password, role, full_name, student_id)
+SELECT 'daniel', 'student123', 'student', CONCAT(s.first_name, ' ', s.last_name), s.id
+FROM students s
+WHERE s.student_number = 'STU-002'
+  AND NOT EXISTS (SELECT 1 FROM users WHERE username = 'daniel');

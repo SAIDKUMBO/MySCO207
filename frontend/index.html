@@ -10,19 +10,49 @@
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">School management portal</p>
-          <h1>Student Portal</h1>
-          <p class="hero-copy">
-            Manage students, track grades, and keep academic records in one place.
+          <p class="eyebrow" id="heroEyebrow">School management portal</p>
+          <h1 id="heroTitle">Student Portal</h1>
+          <p class="hero-copy" id="heroCopy">
+            Sign in as a teacher to manage the full school record or as a student to see your own progress.
           </p>
         </div>
         <div class="hero-status">
           <span class="status-dot" id="connectionDot"></span>
           <span id="connectionStatus">Checking database connection...</span>
+          <span class="pill" id="rolePill">Guest</span>
+          <span class="pill" id="userPill">Not signed in</span>
+          <button class="ghost-btn" id="logoutBtn" type="button" hidden>Log out</button>
         </div>
       </header>
 
-      <main class="dashboard">
+      <section class="auth-panel" id="authPanel">
+        <div>
+          <p class="eyebrow">Secure login</p>
+          <h2>Teacher and student access</h2>
+          <p class="auth-copy">
+            Teachers can manage students, grades, and dashboard records. Students can log in and only view their own profile and grades.
+          </p>
+          <div class="auth-tips">
+            <span class="pill">Teacher: teacher / teacher123</span>
+            <span class="pill">Student: amina / student123</span>
+            <span class="pill">Student: daniel / student123</span>
+          </div>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <label>
+            Username
+            <input id="loginUsername" name="username" type="text" placeholder="teacher" required />
+          </label>
+          <label>
+            Password
+            <input id="loginPassword" name="password" type="password" placeholder="••••••••" required />
+          </label>
+          <button class="primary-btn" type="submit">Sign in</button>
+        </form>
+      </section>
+
+      <main class="dashboard" id="dashboardShell" hidden>
         <section class="stats-grid" aria-label="Dashboard statistics">
           <article class="stat-card">
             <span class="stat-label">Students</span>
@@ -37,13 +67,21 @@
             <strong id="averageScore">0</strong>
           </article>
           <article class="stat-card">
+            <span class="stat-label">Highest score</span>
+            <strong id="highestScore">0</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Lowest score</span>
+            <strong id="lowestScore">0</strong>
+          </article>
+          <article class="stat-card">
             <span class="stat-label">Passing students</span>
             <strong id="passingStudents">0</strong>
           </article>
         </section>
 
         <section class="workspace">
-          <article class="panel">
+          <article class="panel teacher-only" data-role="teacher">
             <div class="panel-header">
               <div>
                 <p class="section-label" id="studentFormLabel">Add student</p>
@@ -82,32 +120,34 @@
             <div class="panel-header">
               <div>
                 <p class="section-label">Selected student</p>
-                <h2>Grades</h2>
+                <h2 id="gradesTitle">Grades</h2>
               </div>
               <span class="pill" id="selectedStudentPill">No student selected</span>
             </div>
 
             <div class="student-detail" id="studentDetail">
-              <p class="muted">Select a student from the list to view their grades and add new ones.</p>
+              <p class="muted">Select a student from the list to view their grades.</p>
             </div>
 
-            <form id="gradeForm" class="stack-form compact-form">
-              <label>
-                Subject
-                <input id="subject" name="subject" type="text" placeholder="Mathematics" required />
-              </label>
-              <div class="two-up">
+            <div class="teacher-only" data-role="teacher">
+              <form id="gradeForm" class="stack-form compact-form">
                 <label>
-                  Score
-                  <input id="score" name="score" type="number" min="0" max="100" step="0.01" placeholder="88" required />
+                  Subject
+                  <input id="subject" name="subject" type="text" placeholder="Mathematics" required />
                 </label>
-                <label>
-                  Term
-                  <input id="term" name="term" type="text" placeholder="Term 1" required />
-                </label>
-              </div>
-              <button class="primary-btn" type="submit">Add grade</button>
-            </form>
+                <div class="two-up">
+                  <label>
+                    Score
+                    <input id="score" name="score" type="number" min="0" max="100" step="0.01" placeholder="88" required />
+                  </label>
+                  <label>
+                    Term
+                    <input id="term" name="term" type="text" placeholder="Term 1" required />
+                  </label>
+                </div>
+                <button class="primary-btn" type="submit">Add grade</button>
+              </form>
+            </div>
 
             <div class="table-wrap grades-wrap">
               <table>
@@ -129,7 +169,7 @@
           </article>
         </section>
 
-        <section class="panel list-panel">
+        <section class="panel list-panel teacher-only" data-role="teacher">
           <div class="panel-header">
             <div>
               <p class="section-label">Records</p>

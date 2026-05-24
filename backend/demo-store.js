@@ -19,6 +19,33 @@ const initialStudents = [
   },
 ]
 
+const initialUsers = [
+  {
+    id: 1,
+    username: 'teacher',
+    password: 'teacher123',
+    role: 'teacher',
+    fullName: 'Teacher Admin',
+    studentId: null,
+  },
+  {
+    id: 2,
+    username: 'amina',
+    password: 'student123',
+    role: 'student',
+    fullName: 'Amina Mensah',
+    studentId: 1,
+  },
+  {
+    id: 3,
+    username: 'daniel',
+    password: 'student123',
+    role: 'student',
+    fullName: 'Daniel Owusu',
+    studentId: 2,
+  },
+]
+
 const initialGrades = [
   {
     id: 1,
@@ -83,9 +110,24 @@ function buildDashboard(students, grades) {
   }
 }
 
+function serializeUser(user) {
+  return {
+    id: user.id,
+    username: user.username,
+    fullName: user.fullName,
+    role: user.role,
+    studentId: user.studentId,
+  }
+}
+
+function buildStudentGrades(grades, studentId) {
+  return grades.filter((grade) => grade.studentId === Number(studentId))
+}
+
 export function createDemoStore() {
   let students = initialStudents.map((student) => ({ ...student }))
   let grades = initialGrades.map((grade) => ({ ...grade }))
+  let users = initialUsers.map((user) => ({ ...user }))
   let nextStudentId = students.length + 1
   let nextGradeId = grades.length + 1
 
@@ -93,8 +135,39 @@ export function createDemoStore() {
     health() {
       return { ok: true, database: 'demo' }
     },
+    authenticate(username, password) {
+      const user = users.find(
+        (item) => item.username === username && item.password === password
+      )
+
+      return user ? serializeUser(user) : null
+    },
+    getMe(userId) {
+      const user = users.find((item) => item.id === Number(userId))
+      if (!user) {
+        return null
+      }
+
+      const profile = serializeUser(user)
+      if (user.role === 'student' && user.studentId) {
+        const student = students.find((item) => item.id === Number(user.studentId))
+        if (student) {
+          profile.student = cloneStudent(student, grades)
+        }
+      }
+
+      return profile
+    },
     listStudents() {
       return students.map((student) => cloneStudent(student, grades))
+    },
+    listStudentsForUser(user) {
+      if (user.role === 'teacher') {
+        return students.map((student) => cloneStudent(student, grades))
+      }
+
+      const student = students.find((item) => item.id === Number(user.studentId))
+      return student ? [cloneStudent(student, grades)] : []
     },
     getStudent(id) {
       const student = students.find((item) => item.id === Number(id))
@@ -107,6 +180,13 @@ export function createDemoStore() {
         student: cloneStudent(student, grades),
         grades: studentGrades.map((grade) => ({ ...grade })),
       }
+    },
+    getStudentForUser(id, user) {
+      if (user.role === 'teacher' || Number(user.studentId) === Number(id)) {
+        return this.getStudent(id)
+      }
+
+      return null
     },
     createStudent(payload) {
       if (students.some((student) => student.studentNumber === payload.studentNumber)) {
@@ -172,6 +252,13 @@ export function createDemoStore() {
         : grades
       return filteredGrades.map((grade) => ({ ...grade }))
     },
+    listGradesForUser(user, studentId) {
+      if (user.role === 'teacher') {
+        return this.listGrades(studentId)
+      }
+
+      return buildStudentGrades(grades, user.studentId).map((grade) => ({ ...grade }))
+    },
     createGrade(payload) {
       const student = students.find((item) => item.id === Number(payload.studentId))
       if (!student) {
@@ -200,8 +287,36 @@ export function createDemoStore() {
       grades = nextGrades
       return true
     },
-    dashboard() {
-      return buildDashboard(students, grades)
+    dashboard(user) {
+      if (user.role === 'teacher') {
+        return buildDashboard(students, grades)
+      }
+
+      const student = students.find((item) => item.id === Number(user.studentId))
+      if (!student) {
+        return {
+          totalStudents: 0,
+          passingStudents: 0,
+          totalGrades: 0,
+          averageScore: null,
+          highestScore: null,
+          lowestScore: null,
+        }
+      }
+
+      const studentGrades = buildStudentGrades(grades, student.id)
+      const averageScore = studentGrades.length
+        ? Number((studentGrades.reduce((sum, grade) => sum + grade.score, 0) / studentGrades.length).toFixed(2))
+        : null
+
+      return {
+        totalStudents: 1,
+        passingStudents: averageScore !== null && averageScore >= 50 ? 1 : 0,
+        totalGrades: studentGrades.length,
+        averageScore,
+        highestScore: studentGrades.length ? Math.max(...studentGrades.map((grade) => grade.score)) : null,
+        lowestScore: studentGrades.length ? Math.min(...studentGrades.map((grade) => grade.score)) : null,
+      }
     },
   }
 }

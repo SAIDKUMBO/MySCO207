@@ -1,14 +1,29 @@
 const apiBase = ''
+const authStorageKey = 'sco207-auth-token'
 
 const elements = {
+  authPanel: document.getElementById('authPanel'),
+  dashboardShell: document.getElementById('dashboardShell'),
+  loginForm: document.getElementById('loginForm'),
+  loginUsername: document.getElementById('loginUsername'),
+  loginPassword: document.getElementById('loginPassword'),
+  logoutBtn: document.getElementById('logoutBtn'),
+  heroEyebrow: document.getElementById('heroEyebrow'),
+  heroTitle: document.getElementById('heroTitle'),
+  heroCopy: document.getElementById('heroCopy'),
+  rolePill: document.getElementById('rolePill'),
+  userPill: document.getElementById('userPill'),
   connectionDot: document.getElementById('connectionDot'),
   connectionStatus: document.getElementById('connectionStatus'),
   totalStudents: document.getElementById('totalStudents'),
   totalGrades: document.getElementById('totalGrades'),
   averageScore: document.getElementById('averageScore'),
+  highestScore: document.getElementById('highestScore'),
+  lowestScore: document.getElementById('lowestScore'),
   passingStudents: document.getElementById('passingStudents'),
   studentCountPill: document.getElementById('studentCountPill'),
   selectedStudentPill: document.getElementById('selectedStudentPill'),
+  gradesTitle: document.getElementById('gradesTitle'),
   studentDetail: document.getElementById('studentDetail'),
   studentsTableBody: document.getElementById('studentsTableBody'),
   gradesTableBody: document.getElementById('gradesTableBody'),
@@ -30,14 +45,19 @@ const elements = {
 }
 
 const state = {
+  token: sessionStorage.getItem(authStorageKey),
+  user: null,
   students: [],
   selectedStudentId: null,
   editingStudentId: null,
-  selectedStudentGrades: [],
 }
 
 function formatScore(score) {
   return Number.isInteger(score) ? `${score}` : score.toFixed(2)
+}
+
+function formatDashboardScore(score) {
+  return score === null ? 'N/A' : score.toFixed(2)
 }
 
 function showToast(message) {
@@ -49,10 +69,75 @@ function showToast(message) {
   }, 2600)
 }
 
+function isTeacher() {
+  return state.user?.role === 'teacher'
+}
+
+function getAuthHeaders() {
+  return state.token ? { Authorization: `Bearer ${state.token}` } : {}
+}
+
+function setSession(token, user) {
+  state.token = token
+  state.user = user
+  sessionStorage.setItem(authStorageKey, token)
+}
+
+function clearSession() {
+  state.token = null
+  state.user = null
+  state.students = []
+  state.selectedStudentId = null
+  state.editingStudentId = null
+  sessionStorage.removeItem(authStorageKey)
+}
+
+function renderHero() {
+  if (!state.user) {
+    elements.heroEyebrow.textContent = 'School management portal'
+    elements.heroTitle.textContent = 'Student Portal'
+    elements.heroCopy.textContent = 'Sign in as a teacher to manage the full school record or as a student to see your own progress.'
+    elements.rolePill.textContent = 'Guest'
+    elements.userPill.textContent = 'Not signed in'
+    elements.logoutBtn.hidden = true
+    return
+  }
+
+  if (isTeacher()) {
+    elements.heroEyebrow.textContent = 'Teacher dashboard'
+    elements.heroTitle.textContent = 'Academic Control Center'
+    elements.heroCopy.textContent = 'Manage students, add grades, and review school performance from one clean dashboard.'
+    elements.rolePill.textContent = 'Teacher'
+  } else {
+    elements.heroEyebrow.textContent = 'Student dashboard'
+    elements.heroTitle.textContent = 'My Learning Portal'
+    elements.heroCopy.textContent = 'View your own record and grades in a focused, read-only student workspace.'
+    elements.rolePill.textContent = 'Student'
+  }
+
+  elements.userPill.textContent = state.user.fullName || state.user.username
+  elements.logoutBtn.hidden = false
+}
+
+function renderRoleVisibility() {
+  document.querySelectorAll('[data-role="teacher"]').forEach((element) => {
+    element.hidden = !isTeacher()
+  })
+}
+
+function renderAppShell() {
+  const authenticated = Boolean(state.user)
+  elements.authPanel.hidden = authenticated
+  elements.dashboardShell.hidden = !authenticated
+  renderHero()
+  renderRoleVisibility()
+}
+
 async function request(path, options = {}) {
   const response = await fetch(`${apiBase}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...(options.headers || {}),
     },
     ...options,
@@ -61,6 +146,11 @@ async function request(path, options = {}) {
   const payload = await response.json().catch(() => ({}))
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearSession()
+      renderAppShell()
+    }
+
     throw new Error(payload.message || 'Request failed')
   }
 
@@ -68,6 +158,10 @@ async function request(path, options = {}) {
 }
 
 function resetStudentForm() {
+  if (!isTeacher()) {
+    return
+  }
+
   state.editingStudentId = null
   elements.studentForm.reset()
   elements.studentId.value = ''
@@ -76,6 +170,10 @@ function resetStudentForm() {
 }
 
 function fillStudentForm(student) {
+  if (!isTeacher()) {
+    return
+  }
+
   state.editingStudentId = student.id
   elements.studentId.value = student.id
   elements.studentNumber.value = student.studentNumber
@@ -90,11 +188,19 @@ function fillStudentForm(student) {
 function renderDashboard(dashboard) {
   elements.totalStudents.textContent = dashboard.totalStudents
   elements.totalGrades.textContent = dashboard.totalGrades
-  elements.averageScore.textContent = dashboard.averageScore === null ? '0' : dashboard.averageScore.toFixed(2)
+  elements.averageScore.textContent = formatDashboardScore(dashboard.averageScore)
+  elements.highestScore.textContent = formatDashboardScore(dashboard.highestScore)
+  elements.lowestScore.textContent = formatDashboardScore(dashboard.lowestScore)
   elements.passingStudents.textContent = dashboard.passingStudents
 }
 
 function renderStudents() {
+  if (!isTeacher()) {
+    elements.studentsTableBody.innerHTML = ''
+    elements.studentCountPill.textContent = 'Students hidden'
+    return
+  }
+
   elements.studentsTableBody.innerHTML = ''
   elements.studentCountPill.textContent = `${state.students.length} record${state.students.length === 1 ? '' : 's'}`
 
@@ -127,13 +233,19 @@ function renderStudents() {
 
 function renderSelectedStudent(student, grades) {
   if (!student) {
-    elements.selectedStudentPill.textContent = 'No student selected'
-    elements.studentDetail.innerHTML = '<p class="muted">Select a student from the list to view their grades and add new ones.</p>'
+    elements.selectedStudentPill.textContent = isTeacher() ? 'No student selected' : 'My profile'
+    elements.gradesTitle.textContent = isTeacher() ? 'Grades' : 'My grades'
+    elements.studentDetail.innerHTML = isTeacher()
+      ? '<p class="muted">Select a student from the list to view their grades.</p>'
+      : '<p class="muted">Your student record could not be loaded.</p>'
     elements.gradesTableBody.innerHTML = '<tr><td colspan="4" class="empty-cell">No grades loaded yet.</td></tr>'
     return
   }
 
-  elements.selectedStudentPill.textContent = `${student.fullName} · ${student.className}`
+  elements.selectedStudentPill.textContent = isTeacher()
+    ? `${student.fullName} · ${student.className}`
+    : 'My profile'
+  elements.gradesTitle.textContent = isTeacher() ? 'Grades' : 'My grades'
   elements.studentDetail.innerHTML = `
     <h3>${student.fullName}</h3>
     <div class="meta-grid">
@@ -156,19 +268,15 @@ function renderSelectedStudent(student, grades) {
       <td>${grade.subject}</td>
       <td>${grade.term}</td>
       <td>${formatScore(grade.score)}</td>
-      <td><button class="icon-btn danger" data-grade-id="${grade.id}">Delete</button></td>
+      <td>${isTeacher() ? `<button class="icon-btn danger" data-grade-id="${grade.id}">Delete</button>` : ''}</td>
     `
     elements.gradesTableBody.appendChild(row)
   }
 }
 
 async function loadDashboard() {
-  try {
-    const dashboard = await request('/api/dashboard')
-    renderDashboard(dashboard)
-  } catch (error) {
-    showToast(error.message)
-  }
+  const dashboard = await request('/api/dashboard')
+  renderDashboard(dashboard)
 }
 
 async function loadStudents(preferredStudentId = state.selectedStudentId) {
@@ -198,7 +306,6 @@ async function selectStudent(studentId, options = {}) {
 
   const result = await request(`/api/students/${studentId}`)
   state.selectedStudentId = result.student.id
-  state.selectedStudentGrades = result.grades
   renderSelectedStudent(result.student, result.grades)
 
   if (!options.silent) {
@@ -206,8 +313,36 @@ async function selectStudent(studentId, options = {}) {
   }
 }
 
+async function handleLoginSubmit(event) {
+  event.preventDefault()
+
+  try {
+    const payload = {
+      username: elements.loginUsername.value.trim(),
+      password: elements.loginPassword.value,
+    }
+
+    const result = await request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+
+    setSession(result.token, result.user)
+    elements.loginForm.reset()
+    renderAppShell()
+    await bootstrapDashboard()
+    showToast(`Signed in as ${result.user.fullName}`)
+  } catch (error) {
+    showToast(error.message)
+  }
+}
+
 async function handleStudentSubmit(event) {
   event.preventDefault()
+
+  if (!isTeacher()) {
+    return
+  }
 
   const payload = {
     studentNumber: elements.studentNumber.value.trim(),
@@ -233,7 +368,7 @@ async function handleStudentSubmit(event) {
     }
 
     resetStudentForm()
-    await loadStudents()
+    await loadStudents(state.selectedStudentId)
     await loadDashboard()
   } catch (error) {
     showToast(error.message)
@@ -242,6 +377,10 @@ async function handleStudentSubmit(event) {
 
 async function handleGradeSubmit(event) {
   event.preventDefault()
+
+  if (!isTeacher()) {
+    return
+  }
 
   if (!state.selectedStudentId) {
     showToast('Select a student first')
@@ -271,6 +410,10 @@ async function handleGradeSubmit(event) {
 }
 
 async function handleStudentActions(event) {
+  if (!isTeacher()) {
+    return
+  }
+
   const button = event.target.closest('button')
   if (!button) {
     return
@@ -316,6 +459,10 @@ async function handleStudentActions(event) {
 }
 
 async function handleGradeActions(event) {
+  if (!isTeacher()) {
+    return
+  }
+
   const button = event.target.closest('button[data-grade-id]')
   if (!button) {
     return
@@ -336,7 +483,14 @@ async function handleGradeActions(event) {
   }
 }
 
-async function initialize() {
+function logout() {
+  clearSession()
+  elements.loginPassword.value = ''
+  renderAppShell()
+  elements.connectionStatus.textContent = 'Signed out'
+}
+
+async function bootstrapDashboard() {
   elements.connectionStatus.textContent = 'Connecting to database...'
 
   try {
@@ -346,21 +500,45 @@ async function initialize() {
   } catch (error) {
     elements.connectionDot.classList.add('offline')
     elements.connectionStatus.textContent = 'Database unavailable'
-    showToast('Check your MySQL connection settings')
+    showToast(state.user ? error.message : 'Sign in to connect to the portal')
+    return
   }
 
   await loadDashboard()
   await loadStudents()
+
+  if (!isTeacher() && state.user?.studentId && state.students.length > 0) {
+    await selectStudent(state.user.studentId, { silent: true })
+  }
 }
 
+async function restoreSession() {
+  if (!state.token) {
+    renderAppShell()
+    return
+  }
+
+  try {
+    const payload = await request('/api/auth/me')
+    setSession(state.token, payload.user)
+    renderAppShell()
+    await bootstrapDashboard()
+  } catch (error) {
+    clearSession()
+    renderAppShell()
+    showToast(error.message)
+  }
+}
+
+elements.loginForm.addEventListener('submit', handleLoginSubmit)
+elements.logoutBtn.addEventListener('click', logout)
 elements.studentForm.addEventListener('submit', handleStudentSubmit)
 elements.gradeForm.addEventListener('submit', handleGradeSubmit)
 elements.studentsTableBody.addEventListener('click', handleStudentActions)
 elements.gradesTableBody.addEventListener('click', handleGradeActions)
 elements.resetStudentForm.addEventListener('click', resetStudentForm)
 
-initialize().catch((error) => {
-  elements.connectionDot.classList.add('offline')
-  elements.connectionStatus.textContent = 'Failed to load portal'
+renderAppShell()
+restoreSession().catch((error) => {
   showToast(error.message)
 })
