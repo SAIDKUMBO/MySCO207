@@ -17,3 +17,5 @@ Notes
 - Data is stored in your browser's `localStorage` under the key `sco207-demo-data-v1`.
 - Click "Reset demo data" to restore the seed dataset.
 - This build intentionally uses only HTML, CSS and JavaScript (no Node or server required).
+
+Reach out in case of any inquiries...I'll be glad to help
