@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cd /home/said/Desktop/sco207/backend && npm run demo$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
